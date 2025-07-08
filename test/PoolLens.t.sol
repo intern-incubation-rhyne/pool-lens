@@ -6,10 +6,11 @@ import { PoolLens, PoolInfo } from "src/PoolLens.sol";
 
 contract PoolLensTest is Test {
     PoolLens public poolLens;
+    string constant RPC_URL = "https://eth-mainnet.g.alchemy.com/v2/DYuKgIEuAolBORHrdxyvCm6cYc_DGce-";
     address constant pool = 0xc931D9fEFd06A8361d8057501F1EC522cF69c573;
 
     function setUp() public {
-        vm.createSelectFork(vm.envString("RPC_URL"));
+        vm.createSelectFork(RPC_URL);
         poolLens = new PoolLens();
     }
 
@@ -56,5 +57,10 @@ contract PoolLensTest is Test {
             console.log(infos[i].decimals1);
         }
         console.log(ethPrice);
+    }
+
+    function test_getRate() public view {
+        address token = address(0xaea46A60368A7bD060eec7DF8CBa43b7EF41Ad85);
+        console.log(poolLens.getRate(token));
     }
 }

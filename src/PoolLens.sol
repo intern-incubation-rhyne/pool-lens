@@ -67,26 +67,16 @@ contract PoolLens {
         info.balance1 = IERC20(info.token1).balanceOf(poolAddr);
     }
 
-    function batchInspect(address[] calldata pools) external returns (PoolInfo[] memory, int256) {
-        uint256 len = pools.length;
-        int256 ethPrice = getETHPrice();
-        PoolInfo[] memory results = new PoolInfo[](len);
-        address[] memory token0s = new address[](len);
-        address[] memory token1s = new address[](len);
-        for (uint256 i = 0; i < len; i++) {
-            PoolInfo memory info = getPoolInfo(pools[i]);
-            results[i] = info;
-            token0s[i] = info.token0;
-            token1s[i] = info.token1;
-        }
-
-        address[] memory uniqueAddresses = unique(token0s, token1s);
-        updateDecimals(uniqueAddresses);
-        for (uint256 i = 0; i < len; i++) {
-            results[i].decimals0 = tokenDecimals[token0s[i]];
-            results[i].decimals1 = tokenDecimals[token1s[i]];
-        }
-        return (results, ethPrice);
+    /// @notice this Price is in 1e-8 USD per ETH
+    function getETHPrice() public view returns (int256) {
+        (
+            /* uint80 roundId */,
+            int256 answer,
+            /*uint256 startedAt*/,
+            /*uint256 updatedAt*/,
+            /*uint80 answeredInRound*/
+        ) = AggregatorV3Interface(CHAINLINK_FEED).latestRoundData();
+        return answer;
     }
 
     function updateDecimals(address[] memory tokens) public {
@@ -117,22 +107,32 @@ contract PoolLens {
         }
     }
 
-    // this returned USD price has 8 decimals
-    function getETHPrice() public view returns (int256) {
-        (
-            /* uint80 roundId */,
-            int256 answer,
-            /*uint256 startedAt*/,
-            /*uint256 updatedAt*/,
-            /*uint80 answeredInRound*/
-        ) = AggregatorV3Interface(CHAINLINK_FEED).latestRoundData();
-        return answer;
+    function batchInspect(address[] calldata pools) external returns (PoolInfo[] memory, int256) {
+        uint256 len = pools.length;
+        int256 ethPrice = getETHPrice();
+        PoolInfo[] memory results = new PoolInfo[](len);
+        address[] memory token0s = new address[](len);
+        address[] memory token1s = new address[](len);
+        for (uint256 i = 0; i < len; i++) {
+            PoolInfo memory info = getPoolInfo(pools[i]);
+            results[i] = info;
+            token0s[i] = info.token0;
+            token1s[i] = info.token1;
+        }
+
+        address[] memory uniqueAddresses = unique(token0s, token1s);
+        updateDecimals(uniqueAddresses);
+        for (uint256 i = 0; i < len; i++) {
+            results[i].decimals0 = tokenDecimals[token0s[i]];
+            results[i].decimals1 = tokenDecimals[token1s[i]];
+        }
+        return (results, ethPrice);
     }
 
-    function batchJudge(address[] calldata pools, uint256 threshold) public returns (int[] memory) {
-        threshold = threshold * 1e44;
+    function batchJudge(address[] calldata pools, uint256 USDThreshold) public returns (int8[] memory) {
+        USDThreshold = USDThreshold * 1e44;
         uint256 len = pools.length;
-        int[] memory results = new int[](len);
+        int8[] memory results = new int8[](len);
         int256 ethPrice = getETHPrice();
         PoolInfo[] memory poolInfos = new PoolInfo[](len);
         address[] memory token0s = new address[](len);
@@ -164,7 +164,7 @@ contract PoolLens {
                 uint256 token1Price = tokenPrices[info.token1];
                 uint256 value = info.balance0 * tokne0Price + info.balance1 * token1Price;
                 emit Evaluate(pools[i], value, tokne0Price, token1Price);
-                if (value >= threshold) {
+                if (value >= USDThreshold) {
                     results[i] = 1;
                 } else {
                     results[i] = -1;

@@ -31,17 +31,12 @@ struct PoolInfo {
 }
 
 contract PoolLens {
-    AggregatorV3Interface public chainlinkFeed;
-    IOffchainOracle public offchainOracle; 
+    address constant chainlinkFeed = 0x5f4eC3Df9cbd43714FE2740f5E3616155c5b8419;
+    address constant offchainOracle = 0x07D91f5fb9Bf7798734C3f606dB065549F6893bb;
     mapping(address => uint8) public tokenDecimals;
 
-    constructor() {
-        chainlinkFeed = AggregatorV3Interface(0x5f4eC3Df9cbd43714FE2740f5E3616155c5b8419);
-        offchainOracle = IOffchainOracle(0x07D91f5fb9Bf7798734C3f606dB065549F6893bb);
-    }
-
     function getRate(address token) public view returns (uint256) {
-        return offchainOracle.getRateToEth(token, true);
+        return IOffchainOracle(offchainOracle).getRateToEth(token, true);
     }
 
     function getPoolInfo(address poolAddr) public view returns (PoolInfo memory info) {
@@ -96,7 +91,7 @@ contract PoolLens {
             /*uint256 startedAt*/,
             /*uint256 updatedAt*/,
             /*uint80 answeredInRound*/
-        ) = chainlinkFeed.latestRoundData();
+        ) = AggregatorV3Interface(chainlinkFeed).latestRoundData();
         return answer;
     }
 }

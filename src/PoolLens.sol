@@ -17,7 +17,7 @@ interface IPool {
 }
 
 interface AggregatorV3Interface {
-    function latestRoundData() external view returns (uint80,int256,uint256,uint256,uint80);
+    function latestRoundData() external view returns (uint80, int256, uint256, uint256, uint80);
 }
 
 struct PoolInfo {
@@ -30,12 +30,7 @@ struct PoolInfo {
     uint8 decimals1;
 }
 
-event Evaluate(
-    address indexed pool,
-    uint256 poolValue,
-    uint256 tokne0Price,
-    uint256 token1Price
-);
+event Evaluate(address indexed pool, uint256 poolValue, uint256 tokne0Price, uint256 token1Price);
 
 contract PoolLens {
     address constant CHAINLINK_FEED = 0x5f4eC3Df9cbd43714FE2740f5E3616155c5b8419;
@@ -43,7 +38,7 @@ contract PoolLens {
     address constant UNISWAP_V2 = 0x5C69bEe701ef814a2B6a3EDD4B1652CB9cc5aA6f;
     address constant UNISWAP_V3 = 0x1F98431c8aD98523631AE4a59f267346ea31F984;
     mapping(address => uint8) public tokenDecimals;
-    mapping(address => uint256) public tokenPrices;  // This price is USD per 1e44 units
+    mapping(address => uint256) public tokenPrices; // This price is USD per 1e44 units
 
     function isAllowed(address factory) public pure returns (bool) {
         if (factory == UNISWAP_V2 || factory == UNISWAP_V3) {
@@ -70,10 +65,13 @@ contract PoolLens {
     /// @notice this Price is in 1e-8 USD per ETH
     function getETHPrice() public view returns (int256) {
         (
-            /* uint80 roundId */,
+            /* uint80 roundId */
+            ,
             int256 answer,
-            /*uint256 startedAt*/,
-            /*uint256 updatedAt*/,
+            /*uint256 startedAt*/
+            ,
+            /*uint256 updatedAt*/
+            ,
             /*uint80 answeredInRound*/
         ) = AggregatorV3Interface(CHAINLINK_FEED).latestRoundData();
         return answer;
@@ -82,7 +80,7 @@ contract PoolLens {
     function updateDecimals(address[] memory tokens) public {
         for (uint256 i = 0; i < tokens.length; i++) {
             address token = tokens[i];
-            if (token == address(0)) { continue; }
+            if (token == address(0)) continue;
             if (tokenDecimals[token] == 0) {
                 try IERC20(token).decimals() returns (uint8 dec) {
                     tokenDecimals[token] = uint8(dec);
@@ -100,7 +98,7 @@ contract PoolLens {
         uint256 len = tokens.length;
         for (uint256 i = 0; i < len; i++) {
             address token = tokens[i];
-            if (token == address(0)) { continue; }
+            if (token == address(0)) continue;
             uint256 rate = offchainOracle.getRateToEth(token, true);
             require(ethPrice >= 0, "Invalid ethPrice: must be non-negative");
             tokenPrices[token] = rate * uint256(ethPrice);

@@ -48,6 +48,14 @@ contract PoolLens {
         }
     }
 
+    function isAllowedPool(address addr) public view returns (bool) {
+        try IPool(addr).factory() returns (address factoryAddr) {
+            return isAllowed(factoryAddr);
+        } catch {
+            return false;
+        }
+    }
+
     /// @notice This Rate is the WEI amount that 1e18 minimal token units equal to
     function getRate(address token) public view returns (uint256) {
         return IOffchainOracle(OFFCHAIN_ORACLE).getRateToEth(token, true);
@@ -112,10 +120,12 @@ contract PoolLens {
         address[] memory token0s = new address[](len);
         address[] memory token1s = new address[](len);
         for (uint256 i = 0; i < len; i++) {
-            PoolInfo memory info = getPoolInfo(pools[i]);
-            results[i] = info;
-            token0s[i] = info.token0;
-            token1s[i] = info.token1;
+            if (isAllowedPool(pools[i])) {
+                PoolInfo memory info = getPoolInfo(pools[i]);
+                results[i] = info;
+                token0s[i] = info.token0;
+                token1s[i] = info.token1;
+            }
         }
 
         address[] memory uniqueAddresses = unique(token0s, token1s);
@@ -136,9 +146,9 @@ contract PoolLens {
         address[] memory token0s = new address[](len);
         address[] memory token1s = new address[](len);
         for (uint256 i = 0; i < len; i++) {
-            PoolInfo memory info = getPoolInfo(pools[i]);
-            poolInfos[i] = info;
-            if (isAllowed(info.factory)) {
+            if (isAllowedPool(pools[i])) {
+                PoolInfo memory info = getPoolInfo(pools[i]);
+                poolInfos[i] = info;
                 token0s[i] = info.token0;
                 token1s[i] = info.token1;
             }

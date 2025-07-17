@@ -30,8 +30,6 @@ struct PoolInfo {
     uint8 decimals1;
 }
 
-event Evaluate(address indexed pool, uint256 poolValue, uint256 tokne0Price, uint256 token1Price);
-
 contract PoolLens {
     address constant CHAINLINK_FEED = 0x5f4eC3Df9cbd43714FE2740f5E3616155c5b8419;
     address constant OFFCHAIN_ORACLE = 0x07D91f5fb9Bf7798734C3f606dB065549F6893bb;
@@ -39,6 +37,7 @@ contract PoolLens {
     address constant UNISWAP_V3 = 0x1F98431c8aD98523631AE4a59f267346ea31F984;
     mapping(address => uint8) public tokenDecimals;
     mapping(address => uint256) public tokenPrices; // This price is USD per 1e44 units
+    event Evaluate(address indexed pool, uint256 poolValue, uint256 tokne0Price, uint256 token1Price);
 
     function isAllowed(address factory) public pure returns (bool) {
         if (factory == UNISWAP_V2 || factory == UNISWAP_V3) {

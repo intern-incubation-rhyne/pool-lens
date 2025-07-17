@@ -37,6 +37,7 @@ contract PoolLens {
     address constant UNISWAP_V3 = 0x1F98431c8aD98523631AE4a59f267346ea31F984;
     mapping(address => uint8) public tokenDecimals;
     mapping(address => uint256) public tokenPrices; // This price is USD per 1e44 units
+
     event Evaluate(address indexed pool, uint256 poolValue, uint256 tokne0Price, uint256 token1Price);
 
     function isAllowed(address factory) public pure returns (bool) {

@@ -1,24 +1,7 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.13;
 
-interface IERC20 {
-    function balanceOf(address account) external view returns (uint256);
-    function decimals() external view returns (uint8);
-}
-
-interface IOffchainOracle {
-    function getRateToEth(address srcToken, bool useSrcWrappers) external view returns (uint256 weightedRate);
-}
-
-interface IPool {
-    function token0() external view returns (address);
-    function token1() external view returns (address);
-    function factory() external view returns (address);
-}
-
-interface AggregatorV3Interface {
-    function latestRoundData() external view returns (uint80, int256, uint256, uint256, uint80);
-}
+import "./iterfaces.sol";
 
 struct PoolInfo {
     address token0;
@@ -71,7 +54,7 @@ contract PoolLens {
     }
 
     /// @notice this Price is in 1e-8 USD per ETH
-    function getETHPrice() public view returns (int256) {
+    function getEthPrice() public view returns (int256) {
         (
             /* uint80 roundId */
             ,
@@ -115,7 +98,7 @@ contract PoolLens {
 
     function batchInspect(address[] calldata pools) external returns (PoolInfo[] memory, int256) {
         uint256 len = pools.length;
-        int256 ethPrice = getETHPrice();
+        int256 ethPrice = getEthPrice();
         PoolInfo[] memory results = new PoolInfo[](len);
         address[] memory token0s = new address[](len);
         address[] memory token1s = new address[](len);
@@ -137,11 +120,11 @@ contract PoolLens {
         return (results, ethPrice);
     }
 
-    function batchJudge(address[] calldata pools, uint256 USDThreshold) public returns (int8[] memory) {
-        USDThreshold = USDThreshold * 1e44;
+    function batchJudge(address[] calldata pools, uint256 usdThreshold) public returns (int8[] memory) {
+        usdThreshold = usdThreshold * 1e44;
         uint256 len = pools.length;
         int8[] memory results = new int8[](len);
-        int256 ethPrice = getETHPrice();
+        int256 ethPrice = getEthPrice();
         PoolInfo[] memory poolInfos = new PoolInfo[](len);
         address[] memory token0s = new address[](len);
         address[] memory token1s = new address[](len);
@@ -172,7 +155,7 @@ contract PoolLens {
                 uint256 token1Price = tokenPrices[info.token1];
                 uint256 value = info.balance0 * tokne0Price + info.balance1 * token1Price;
                 emit Evaluate(pools[i], value, tokne0Price, token1Price);
-                if (value >= USDThreshold) {
+                if (value >= usdThreshold) {
                     results[i] = 1;
                 } else {
                     results[i] = -1;
@@ -212,5 +195,24 @@ contract PoolLens {
             result[i] = temp[i];
         }
         return result;
+    }
+
+    function batchFactory(address[] calldata pools) public view returns (address[] memory) {
+        uint256 len = pools.length;
+        address[] memory results = new address[](len);
+        for (uint256 i = 0; i < len; i++) {
+            // Check if the address is a contract
+            if (pools[i].code.length == 0) {
+                results[i] = address(0); // Not a contract, return zero address
+                continue;
+            }
+
+            try IChildContract(pools[i]).factory() returns (address factory) {
+                results[i] = factory;
+            } catch {
+                results[i] = address(0); // Return zero address if call fails
+            }
+        }
+        return results;
     }
 }

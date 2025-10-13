@@ -39,8 +39,8 @@ contract PoolLensTest is Test {
         console.log(info.balance1);
     }
 
-    function test_getETHPrice() public view {
-        console.log(poolLens.getETHPrice());
+    function test_getEthPrice() public view {
+        console.log(poolLens.getEthPrice());
     }
 
     function test_updateDecimals() public {
@@ -103,7 +103,7 @@ contract PoolLensTest is Test {
 
     function test_debug() public {
         address[] memory pools = new address[](1);
-        pools[0] = address(0x48759F220ED983dB51fA7A8C0D2AAb8f3ce4166a);
+        pools[0] = address(0x911c6Ff7D6b39c4888c5Bf2fE931D593f2A403A4);
 
         int8[] memory results = poolLens.batchJudge(pools, 1);
         for (uint256 i = 0; i < results.length; i++) {
